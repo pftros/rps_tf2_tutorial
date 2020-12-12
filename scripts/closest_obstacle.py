@@ -5,9 +5,10 @@ import rospy
 import tf2_ros
 
 from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, Quaternion
 
 from tf_conversions import transformations
+from math import sin, cos
 
 class ObstacleBroadcaster:
     """
@@ -25,13 +26,14 @@ class ObstacleBroadcaster:
     def scan_callback(self, scan):
         """ This is where all the action happens! """
         self.tf_laser_obst.header.stamp = rospy.Time.now()
-        self.tf_laser_obst.transform.translation.x = 1
-        self.tf_laser_obst.transform.translation.y = 0.5
-        q = transformations.quaternion_from_euler(0, 0, 0.707)
-        self.tf_laser_obst.transform.rotation.x = q[0]
-        self.tf_laser_obst.transform.rotation.y = q[1]
-        self.tf_laser_obst.transform.rotation.z = q[2]
-        self.tf_laser_obst.transform.rotation.w = q[3]
+        range_obs = min(scan.ranges)
+        idx_obs = scan.ranges.index(range_obs)
+        angle_obs = scan.angle_min + idx_obs*scan.angle_increment
+        trans = self.tf_laser_obst.transform.translation
+        trans.x = range_obs*cos(angle_obs)
+        trans.y = range_obs*sin(angle_obs)
+        q = transformations.quaternion_from_euler(0, 0, angle_obs)
+        self.tf_laser_obst.transform.rotation = Quaternion(*q)
         self.tf_bcaster.sendTransform(self.tf_laser_obst)
 
     def run(self):
