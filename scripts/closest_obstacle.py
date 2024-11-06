@@ -5,9 +5,10 @@ import rospy
 import tf2_ros
 
 from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import TransformStamped, Quaternion
+from geometry_msgs.msg import TransformStamped, Quaternion, PoseStamped
 
 from tf_conversions import transformations
+from tf2_geometry_msgs import do_transform_pose
 from math import sin, cos
 
 class ObstacleBroadcaster:
@@ -21,7 +22,16 @@ class ObstacleBroadcaster:
         self.tf_obst.child_frame_id = 'obstacle'
         self.tf_obst.transform.translation.z = 0.0
 
+        # Initialize the constant pose fields
+        self.gpose_obst = PoseStamped()
+        self.gpose_obst.header.frame_id = 'odom'
+        self.gpose_obst.pose.position.z = 0.0
+
         self.tf_bcaster = tf2_ros.TransformBroadcaster()
+        self.pose_publisher = rospy.Publisher('obstacle_pose', PoseStamped, queue_size=1)
+        # TF buffer and listener
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         # Initialize subscribers at the very end!
         self.sub = rospy.Subscriber('scan', LaserScan, self.scan_callback)
 
@@ -41,6 +51,24 @@ class ObstacleBroadcaster:
         q = transformations.quaternion_from_euler(0, 0, angle_obs)
         self.tf_obst.transform.rotation = Quaternion(*q)
         self.tf_bcaster.sendTransform(self.tf_obst)
+
+        # Initialize global pose from local transform
+        self.gpose_obst.header.stamp = scan.header.stamp
+        self.gpose_obst.pose.position = trans
+        self.gpose_obst.pose.orientation = self.tf_obst.transform.rotation
+        # Get the transform to global frame from the TF buffer
+        try:
+            buf = self.tf_buffer
+            tf_odom_laser = buf.lookup_transform('odom',
+                                                 'base_laser_link',
+                                                 rospy.Time())
+            # Transform the pose to global frame!
+            self.gpose_obst = do_transform_pose(self.gpose_obst, tf_odom_laser)
+            self.pose_publisher.publish(self.gpose_obst)
+        except (tf2_ros.LookupException,
+                tf2_ros.ConnectivityException,
+                tf2_ros.ExtrapolationException) as ex:
+            rospy.logwarn(ex)
 
     def run(self):
         while not rospy.is_shutdown():
