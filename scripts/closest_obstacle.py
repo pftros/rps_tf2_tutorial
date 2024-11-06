@@ -8,6 +8,7 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import TransformStamped, Quaternion
 
 from tf_conversions import transformations
+from math import sin, cos
 
 class ObstacleBroadcaster:
     """
@@ -27,12 +28,17 @@ class ObstacleBroadcaster:
     def scan_callback(self, scan):
         """ This is where all the action happens! """
         self.tf_obst.header.stamp = scan.header.stamp
+        # Compute obstacle range and angle
+        range_obs = min(scan.ranges)
+        idx_obs = scan.ranges.index(range_obs)
+        angle_obs = scan.angle_min + idx_obs*scan.angle_increment
+
         # Translation
         trans = self.tf_obst.transform.translation
-        trans.x = 1
-        trans.y = 0.5
+        trans.x = range_obs*cos(angle_obs)
+        trans.y = range_obs*sin(angle_obs)
         # Rotation
-        q = transformations.quaternion_from_euler(0, 0, 0.707)
+        q = transformations.quaternion_from_euler(0, 0, angle_obs)
         self.tf_obst.transform.rotation = Quaternion(*q)
         self.tf_bcaster.sendTransform(self.tf_obst)
 
