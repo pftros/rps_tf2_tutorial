@@ -26,7 +26,7 @@ class ObstacleBroadcaster:
 
     def scan_callback(self, scan):
         """ This is where all the action happens! """
-        self.tf_obst.header.stamp = rospy.Time.now()
+        self.tf_obst.header.stamp = scan.header.stamp
         # Translation
         trans = self.tf_obst.transform.translation
         trans.x = 1
