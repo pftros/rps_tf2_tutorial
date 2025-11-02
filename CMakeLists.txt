@@ -1,6 +1,10 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(rps_tf2_tutorial)
+cmake_minimum_required(VERSION 3.5)
+project(rps_tf2_tutorial NONE)
 
-find_package(catkin REQUIRED)
+find_package(ament_cmake REQUIRED)
 
-catkin_package()
+install(DIRECTORY launch rviz urdf
+        DESTINATION share/${PROJECT_NAME}
+)
+
+ament_package()
