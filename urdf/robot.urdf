@@ -5,8 +5,16 @@
     <color rgba="0 0 0.8 1"/>
   </material>
 
+   <material name="green">
+    <color rgba="0 0.8 0 1"/>
+  </material>
+
   <material name="gray">
     <color rgba="0.8 0.8 0.8 1"/>
+  </material>
+
+  <material name="black">
+    <color rgba="0 0 0 1"/>
   </material>
 
   <link name="base_link">
@@ -14,9 +22,42 @@
       <geometry>
         <box size="0.6 0.4 0.3"/>
       </geometry>
+      <origin xyz="0.1 0 0"/>
       <material name="gray"/>
     </visual>
   </link>
+
+  <link name="left_wheel">
+    <visual>
+      <geometry>
+        <cylinder length="0.1" radius="0.15"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_left_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+    <origin rpy="-1.5708 0 0" xyz="0 0.25 -0.1"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="right_wheel">
+    <visual>
+      <geometry>
+        <cylinder length="0.1" radius="0.15"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_right_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="right_wheel"/>
+    <origin rpy="-1.5708 0 0" xyz="0 -0.25 -0.1"/>
+    <axis xyz="0 0 1"/>
+  </joint>
 
   <link name="laser_link">
     <visual>
@@ -31,6 +72,21 @@
   <joint name="base_to_laser" type="fixed">
     <parent link="base_link"/>
     <child link="laser_link"/>
-    <origin rpy="0 0 0.785" xyz="0.2 0.1 0.25"/>
+    <origin rpy="0 0 0.785" xyz="0.3 0.1 0.25"/>
+  </joint>
+
+  <link name="charge_plate">
+    <visual>
+      <geometry>
+        <box size="0.2 0.1 0.05"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+  </link>
+
+  <joint name="base_to_charge" type="fixed">
+    <parent link="base_link"/>
+    <child link="charge_plate"/>
+    <origin rpy="1.5708 0 0" xyz="0.25 -0.225 0.07"/>
   </joint>
 </robot>
