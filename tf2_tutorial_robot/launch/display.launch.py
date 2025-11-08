@@ -7,9 +7,9 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     ld = LaunchDescription()
 
-    rps_tf2_tutorial_path = FindPackageShare('rps_tf2_tutorial')
+    tf2_tutorial_robot_path = FindPackageShare('tf2_tutorial_robot')
     default_model_path = PathJoinSubstitution(['urdf', 'robot.urdf'])
-    default_rviz_config_path = PathJoinSubstitution([rps_tf2_tutorial_path, 'rviz', 'urdf.rviz'])
+    default_rviz_config_path = PathJoinSubstitution([tf2_tutorial_robot_path, 'rviz', 'urdf.rviz'])
 
     # These parameters are maintained for backwards compatibility
     gui_arg = DeclareLaunchArgument(name='gui', default_value='true', choices=['true', 'false'],
@@ -21,12 +21,12 @@ def generate_launch_description():
 
     # This parameter has changed its meaning slightly from previous versions
     ld.add_action(DeclareLaunchArgument(name='model', default_value=default_model_path,
-                                        description='Path to robot urdf file relative to rps_tf2_tutorial package'))
+                                        description='Path to robot urdf file relative to tf2_tutorial_robot package'))
 
     ld.add_action(IncludeLaunchDescription(
         PathJoinSubstitution([FindPackageShare('urdf_launch'), 'launch', 'display.launch.py']),
         launch_arguments={
-            'urdf_package': 'rps_tf2_tutorial',
+            'urdf_package': 'tf2_tutorial_robot',
             'urdf_package_path': LaunchConfiguration('model'),
             'rviz_config': LaunchConfiguration('rvizconfig'),
             'jsp_gui': LaunchConfiguration('gui')}.items()

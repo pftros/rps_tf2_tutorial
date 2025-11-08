@@ -1,17 +1,15 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>rps_tf2_tutorial</name>
+  <name>tf2_tutorial_robot</name>
   <version>1.0.0</version>
-  <description>A TF2 tutorial for Robot Programming and Simulation class</description>
+  <description>Partial URDF description and Gazebo simulation of a simple diff-drive robot.</description>
 
   <maintainer email="damjan@romb-technologies.hr">Damjan Miklic</maintainer>
   <license>Apache</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <!--depend>geometry_msgs</depend-->
-  <!--depend>sensor_msgs</depend-->
-  <!--depend>tf2_ros</depend-->
   <exec_depend>urdf_launch</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
