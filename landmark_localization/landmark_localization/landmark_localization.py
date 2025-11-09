@@ -2,7 +2,6 @@ import rclpy
 from rclpy.node import Node
 
 from sensor_msgs.msg import LaserScan
-from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker
 
 from math import sin, cos
@@ -11,6 +10,10 @@ class LandmarkLocalization(Node):
 
     def __init__(self):
         super().__init__('landmark_localization')
+        self.publisher = self.create_publisher(
+            Marker,
+            'landmarks',
+            10)
         self.subscription = self.create_subscription(
             LaserScan,
             'scan',
@@ -39,8 +42,30 @@ class LandmarkLocalization(Node):
                 landmarks['prism']['y'] = r * sin(angle)
                 break
 
-        self.get_logger().info(f'{landmarks}')
+        self.publish_landmark_marker(landmarks['cylinder'],
+                                     Marker.CYLINDER,
+                                     scan.header)
+        self.publish_landmark_marker(landmarks['prism'],
+                                     Marker.CUBE,
+                                     scan.header)
 
+    def publish_landmark_marker(self, pos, type, header):
+        # Publish landmark markers
+        marker = Marker()
+        marker.header = header
+        marker.id = type
+        marker.type = type
+        marker.pose.position.x = pos['x']
+        marker.pose.position.y = pos['y']
+        marker.pose.orientation.w = 1.0
+        # For Marker.POINTS, scale.x is width, scale.y is height
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 1.0
+        marker.color.g = 1.0
+        marker.color.a = 1.0
+        marker.frame_locked = True
+        self.publisher.publish(marker)
 
 def main(args=None):
     rclpy.init(args=args)
