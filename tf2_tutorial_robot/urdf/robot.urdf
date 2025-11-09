@@ -25,6 +25,17 @@
       <origin xyz="0.1 0 0"/>
       <material name="gray"/>
     </visual>
+    <inertial>
+      <mass value="15"/>
+      <inertia ixx="0.3125" ixy="0" ixz="0"
+       iyy="0.5625" iyz="0" izz="0.65"/>
+    </inertial>
+    <collision>
+      <geometry>
+        <box size="0.6 0.6 0.35"/>
+      </geometry>
+      <origin xyz="0.1 0 -0.05"/>
+    </collision>
   </link>
 
   <link name="left_wheel">
@@ -34,6 +45,11 @@
       </geometry>
       <material name="black"/>
     </visual>
+    <inertial>
+      <mass value="2.5"/>
+      <inertia ixx="0.016" ixy="0" ixz="0"
+       iyy="0.016" iyz="0" izz="0.028"/>
+    </inertial>
   </link>
 
   <joint name="base_to_left_wheel" type="continuous">
@@ -50,6 +66,11 @@
       </geometry>
       <material name="black"/>
     </visual>
+    <inertial>
+      <mass value="2.5"/>
+      <inertia ixx="0.016" ixy="0" ixz="0"
+       iyy="0.016" iyz="0" izz="0.028"/>
+    </inertial>
   </link>
 
   <joint name="base_to_right_wheel" type="continuous">
