@@ -4,12 +4,15 @@ from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
 from visualization_msgs.msg import Marker
 
-from math import sin, cos
+from math import sin, cos, sqrt, atan2
 
 class LandmarkLocalization(Node):
 
     def __init__(self):
         super().__init__('landmark_localization')
+        # Landmark coordinates, should become parameters
+        self.cylinder = {'x':3, 'y':0}
+        self.prism = {'x':3, 'y':3}
         self.publisher = self.create_publisher(
             Marker,
             'landmarks',
@@ -34,12 +37,16 @@ class LandmarkLocalization(Node):
                 angle = scan.angle_min + idx * scan.angle_increment
                 landmarks['cylinder']['x'] = r * cos(angle)
                 landmarks['cylinder']['y'] = r * sin(angle)
+                landmarks['cylinder']['r'] = r
+                landmarks['cylinder']['angle'] = angle
                 break
         for idx, r in enumerate(reversed(scan.ranges)):
             if r > scan.range_min and r < scan.range_max:
                 angle = scan.angle_max - idx * scan.angle_increment
                 landmarks['prism']['x'] = r * cos(angle)
                 landmarks['prism']['y'] = r * sin(angle)
+                landmarks['prism']['r'] = r
+                landmarks['prism']['angle'] = angle
                 break
 
         self.publish_landmark_marker(landmarks['cylinder'],
@@ -48,6 +55,16 @@ class LandmarkLocalization(Node):
         self.publish_landmark_marker(landmarks['prism'],
                                      Marker.CUBE,
                                      scan.header)
+
+        # Compute laser pose in the world frame
+        # (with respect to the landmarks)
+        d_CP = sqrt((self.cylinder['x']-self.prism['x'])**2 +
+                    (self.cylinder['y']-self.prism['y'])**2)
+        x_L = self.cylinder['x'] - landmarks['cylinder']['r']
+        y_L = 0
+        theta_L = (atan2(d_CP, landmarks['cylinder']['r']) -
+                   landmarks['prism']['angle'])
+        self.get_logger().info(f'{x_L},{y_L},{theta_L}')
 
     def publish_landmark_marker(self, pos, type, header):
         # Publish landmark markers
