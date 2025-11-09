@@ -36,7 +36,7 @@ def generate_launch_description():
     ld.add_action(IncludeLaunchDescription(
         PathJoinSubstitution([FindPackageShare('ros_gz_sim'), 'launch', 'gz_sim.launch.py']),
         launch_arguments={
-            'gz_args': 'shapes.sdf'
+            'gz_args': PathJoinSubstitution([tf2_tutorial_robot_path, 'world', 'two_landmarks.sdf']),
         #    'gui': LaunchConfiguration('gui'),
         #    'pause': 'true',
         }.items(),

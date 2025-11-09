@@ -3,7 +3,7 @@ project(tf2_tutorial_robot NONE)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY launch rviz urdf
+install(DIRECTORY launch rviz urdf world
         DESTINATION share/${PROJECT_NAME}
 )
 
