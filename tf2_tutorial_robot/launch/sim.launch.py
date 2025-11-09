@@ -11,6 +11,7 @@ def generate_launch_description():
     tf2_tutorial_robot_path = FindPackageShare('tf2_tutorial_robot')
     default_model_path = PathJoinSubstitution(['urdf', 'robot.urdf'])
     default_rviz_config_path = PathJoinSubstitution([tf2_tutorial_robot_path, 'rviz', 'urdf.rviz'])
+    default_bridge_params_path = PathJoinSubstitution([tf2_tutorial_robot_path, 'world', 'ros_gz_bridge.yaml'])
 
     # These parameters are maintained for backwards compatibility
     gui_arg = DeclareLaunchArgument(name='gui', default_value='true', choices=['true', 'false'],
@@ -47,6 +48,14 @@ def generate_launch_description():
         executable='create',
         name='robot_spawner',
         arguments=['-topic', '/robot_description', '-name', 'robot', '-z', '0.25', '-unpause'],
+        output='screen',
+    ))
+
+    ld.add_action(Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='gazebo_bridge',
+        parameters=[{'config_file': default_bridge_params_path}],
         output='screen',
     ))
 
