@@ -3,8 +3,22 @@ from rclpy.node import Node
 
 from sensor_msgs.msg import LaserScan
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import PoseStamped, TransformStamped
+from tf2_ros import TransformException, TransformBroadcaster
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
 
 from math import sin, cos, sqrt, atan2
+import PyKDL as kdl
+
+def transform_to_kdl(transform):
+    """ Convert TransformStamped to PyKDL.Frame"""
+    trans = transform.transform.translation
+    rot = transform.transform.rotation
+    return kdl.Frame(
+        kdl.Rotation.Quaternion(rot.x, rot.y, rot.z, rot.w),
+        kdl.Vector(trans.x, trans.y, trans.z)
+    )
 
 class LandmarkLocalization(Node):
 
@@ -13,10 +27,14 @@ class LandmarkLocalization(Node):
         # Landmark coordinates, should become parameters
         self.cylinder = {'x':3, 'y':0}
         self.prism = {'x':3, 'y':3}
+
         self.publisher = self.create_publisher(
             Marker,
             'landmarks',
             10)
+        self.tf_broadcaster = TransformBroadcaster(self)
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
         self.subscription = self.create_subscription(
             LaserScan,
             'scan',
@@ -60,11 +78,49 @@ class LandmarkLocalization(Node):
         # (with respect to the landmarks)
         d_CP = sqrt((self.cylinder['x']-self.prism['x'])**2 +
                     (self.cylinder['y']-self.prism['y'])**2)
-        x_L = self.cylinder['x'] - landmarks['cylinder']['r']
-        y_L = 0
-        theta_L = (atan2(d_CP, landmarks['cylinder']['r']) -
+        x_WL = self.cylinder['x'] - landmarks['cylinder']['r']
+        y_WL = 0
+        theta_WL = (atan2(d_CP, landmarks['cylinder']['r']) -
                    landmarks['prism']['angle'])
-        self.get_logger().info(f'{x_L},{y_L},{theta_L}')
+        #self.get_logger().info(f'{x_WL},{y_WL},{theta_WL}')
+
+        # Convert laser pose to KDL frame
+        T_WL = kdl.Frame(
+            kdl.Rotation.RPY(0.0, 0.0, theta_WL),
+            kdl.Vector(x_WL, y_WL, 0.0)
+        )
+
+        try:
+            # Get the transform from base_link
+            # to laser_link frame
+            T = self.tf_buffer.lookup_transform(
+                'laser_link',
+                'base_link',
+                rclpy.time.Time())
+            #self.get_logger().info(f'{T}')
+            T_LB = transform_to_kdl(T)
+
+            # Compute base_link pose in world frame
+            T_WB = T_WL * T_LB
+
+            # Convert back to TransformStamped for broadcasting
+            tf = TransformStamped()
+            tf.header.stamp = scan.header.stamp
+            tf.header.frame_id = 'world'
+            tf.child_frame_id = 'base_link'
+            tf.transform.translation.x = T_WB.p[0]
+            tf.transform.translation.y = T_WB.p[1]
+            tf.transform.translation.z = T_WB.p[2]
+            qx, qy, qz, qw = T_WB.M.GetQuaternion()
+            tf.transform.rotation.x = qx
+            tf.transform.rotation.y = qy
+            tf.transform.rotation.z = qz
+            tf.transform.rotation.w = qw
+
+            self.tf_broadcaster.sendTransform(tf)
+        except TransformException as ex:
+            self.get_logger().info(
+                f'Could not transform base_link to laser_link: {ex}')
 
     def publish_landmark_marker(self, pos, type, header):
         # Publish landmark markers
